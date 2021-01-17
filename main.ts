@@ -51,6 +51,7 @@ controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
         loaded += -1
     }
 })
+// Fire-ball
 sprites.onOverlap(SpriteKind.Player, SpriteKind.gun, function (sprite, otherSprite) {
     fireball.destroy(effects.confetti, 100)
     loaded = 5
@@ -223,6 +224,25 @@ scene.onOverlapTile(SpriteKind.Player, sprites.dungeon.buttonOrange, function (s
 })
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (sprite, otherSprite) {
     otherSprite.destroy(effects.disintegrate, 500)
+    chest = sprites.create(img`
+        . . b b b b b b b b b b b b . . 
+        . b e 4 4 4 4 4 4 4 4 4 4 e b . 
+        b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
+        b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
+        b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
+        b e e 4 4 4 4 4 4 4 4 4 4 e e b 
+        b e e e e e e e e e e e e e e b 
+        b e e e e e e e e e e e e e e b 
+        b b b b b b b d d b b b b b b b 
+        c b b b b b b c c b b b b b b c 
+        c c c c c c b c c b c c c c c c 
+        b e e e e e c b b c e e e e e b 
+        b e e e e e e e e e e e e e e b 
+        b c e e e e e e e e e e e e c b 
+        b b b b b b b b b b b b b b b b 
+        . b b . . . . . . . . . . b b . 
+        `, SpriteKind.bonus)
+    tiles.placeOnTile(chest, tiles.getTileLocation(60, 0))
 })
 // destroy enemy and making chest and fire-ball
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
@@ -337,16 +357,33 @@ tiles.placeOnRandomTile(bat, sprites.dungeon.collectibleBlueCrystal)
 bat.x += 14
 loaded = 0
 direction = 1
+// Level 1
 game.onUpdate(function () {
-    if (Sebastian.y > 250) {
-        game.over(false, effects.dissolve)
-    }
     // enemy
     // 
     if (bat.tileKindAt(TileDirection.Left, sprites.dungeon.collectibleBlueCrystal)) {
         bat.vx = 50
     } else if (bat.tileKindAt(TileDirection.Right, sprites.dungeon.doorLockedWest)) {
         bat.vx = -50
+    }
+    if (loaded > 0) {
+        Sebastian.say(loaded)
+    } else {
+        Sebastian.say("")
+    }
+    if (boss_life <= 0) {
+        monster.destroy(effects.disintegrate, 500)
+    }
+    if (monster.top <= 32) {
+        monster.vy = 50
+    } else if (monster.bottom >= 110) {
+        monster.vy = -50
+    }
+})
+// Hero moves
+game.onUpdate(function () {
+    if (Sebastian.y > 470) {
+        game.over(false, effects.dissolve)
     }
     if (controller.right.isPressed()) {
         direction = 1
@@ -388,18 +425,5 @@ game.onUpdate(function () {
             . . . . . f f f f f f . . . . . 
             . . . . . . . f f f . . . . . . 
             `)
-    }
-    if (loaded > 0) {
-        Sebastian.say(loaded)
-    } else {
-        Sebastian.say("")
-    }
-    if (boss_life <= 0) {
-        monster.destroy(effects.disintegrate, 500)
-    }
-    if (monster.top <= 32) {
-        monster.vy = 50
-    } else if (monster.bottom >= 110) {
-        monster.vy = -50
     }
 })
