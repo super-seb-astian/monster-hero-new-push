@@ -3,10 +3,11 @@ namespace SpriteKind {
     export const gun = SpriteKind.create()
     export const boss = SpriteKind.create()
 }
+// Boss + Hero contact
 sprites.onOverlap(SpriteKind.Player, SpriteKind.boss, function (sprite, otherSprite) {
     game.over(false, effects.dissolve)
 })
-// fire-ball
+// Hero fire-ball
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     if (loaded > 0) {
         if (direction == 1) {
@@ -56,10 +57,32 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.gun, function (sprite, otherSpri
     fireball.destroy(effects.confetti, 100)
     loaded = 5
 })
+// All Levels make 
 function make_tilmap (levels: number) {
     // levels remember to ask how to do more levels
     if (levels == 1) {
         tiles.setTilemap(tilemap`level1`)
+        wall = tiles.getTilesByType(sprites.dungeon.stairNorth)
+        bat = sprites.create(img`
+            . . f f f . . . . . . . . . . . 
+            f f f c c . . . . . . . . f f f 
+            f f c c c . c c . . . f c b b c 
+            f f c 3 c c 3 c c f f b b b c . 
+            f f c 3 b c 3 b c f b b c c c . 
+            f c b b b b b b c f b c b c c . 
+            c c 1 b b b 1 b c b b c b b c . 
+            c b b b b b b b b b c c c b c . 
+            c b 1 f f 1 c b b c c c c c . . 
+            c f 1 f f 1 f b b b b f c . . . 
+            f f f f f f f b b b b f c . . . 
+            f f 2 2 2 2 f b b b b f c c . . 
+            . f 2 2 2 2 2 b b b c f . . . . 
+            . . f 2 2 2 b b b c f . . . . . 
+            . . . f f f f f f f . . . . . . 
+            . . . . . . . . . . . . . . . . 
+            `, SpriteKind.Enemy)
+        tiles.placeOnRandomTile(bat, sprites.dungeon.collectibleBlueCrystal)
+        bat.x += 14
         monster = sprites.create(img`
             ................
             ..aaaaaaaaaaaaa.
@@ -96,7 +119,7 @@ function make_tilmap (levels: number) {
             `, SpriteKind.boss)
         tiles.placeOnTile(monster, tiles.getTileLocation(106, 2))
         boss_life = 3
-    } else {
+    } else if (levels == 2) {
         tiles.setTilemap(tilemap`level2`)
         bat = sprites.create(img`
             . . f f f . . . . . . . . . . . 
@@ -118,6 +141,8 @@ function make_tilmap (levels: number) {
             `, SpriteKind.Enemy)
         tiles.placeOnRandomTile(bat, sprites.dungeon.collectibleBlueCrystal)
         bat.x += 14
+    } else {
+        tiles.setTilemap(tilemap`final_boss`)
     }
 }
 sprites.onOverlap(SpriteKind.Player, SpriteKind.bonus, function (sprite, otherSprite) {
@@ -146,84 +171,76 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.bonus, function (sprite, otherSp
         tiles.setWallAt(value, false)
     }
 })
+// Hero jump
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     if (Sebastian.vy == 0) {
         Sebastian.vy = -200
     }
 })
+// Boss + projectile interaction
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.boss, function (sprite, otherSprite) {
     sprite.destroy(effects.disintegrate, 500)
     boss_life += -1
 })
+// Scene change
 scene.onOverlapTile(SpriteKind.Player, sprites.dungeon.buttonOrange, function (sprite, location) {
     level += 1
     make_tilmap(level)
     tiles.placeOnRandomTile(Sebastian, assets.tile`tile1`)
 })
+// Levels 1 + 2
+sprites.onDestroyed(SpriteKind.Enemy, function (sprite) {
+    if (level == 1 || level == 2) {
+        if (sprite == bat) {
+            chest = sprites.create(img`
+                . . b b b b b b b b b b b b . . 
+                . b e 4 4 4 4 4 4 4 4 4 4 e b . 
+                b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
+                b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
+                b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
+                b e e 4 4 4 4 4 4 4 4 4 4 e e b 
+                b e e e e e e e e e e e e e e b 
+                b e e e e e e e e e e e e e e b 
+                b b b b b b b d d b b b b b b b 
+                c b b b b b b c c b b b b b b c 
+                c c c c c c b c c b c c c c c c 
+                b e e e e e c b b c e e e e e b 
+                b e e e e e e e e e e e e e e b 
+                b c e e e e e e e e e e e e c b 
+                b b b b b b b b b b b b b b b b 
+                . b b . . . . . . . . . . b b . 
+                `, SpriteKind.bonus)
+            tiles.placeOnTile(chest, tiles.getTileLocation(60, 0))
+            fireball = sprites.create(img`
+                . . . . . . . . . . . . . . . . 
+                . . . . . . 4 4 4 4 . . . . . . 
+                . . . . 4 4 4 5 5 4 4 4 . . . . 
+                . . . 3 3 3 3 4 4 4 4 4 4 . . . 
+                . . 4 3 3 3 3 2 2 2 1 1 4 4 . . 
+                . . 3 3 3 3 3 2 2 2 1 1 5 4 . . 
+                . 4 3 3 3 3 2 2 2 2 2 5 5 4 4 . 
+                . 4 3 3 3 2 2 2 4 4 4 4 5 4 4 . 
+                . 4 4 3 3 2 2 4 4 4 4 4 4 4 4 . 
+                . 4 2 3 3 2 2 4 4 4 4 4 4 4 4 . 
+                . . 4 2 3 3 2 4 4 4 4 4 2 4 . . 
+                . . 4 2 2 3 2 2 4 4 4 2 4 4 . . 
+                . . . 4 2 2 2 2 2 2 2 2 4 . . . 
+                . . . . 4 4 2 2 2 2 4 4 . . . . 
+                . . . . . . 4 4 4 4 . . . . . . 
+                . . . . . . . . . . . . . . . . 
+                `, SpriteKind.gun)
+            tiles.placeOnTile(fireball, tiles.getTileLocation(95, 4))
+        }
+    }
+})
+// Destroy enemy + fire-ball
 sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, function (sprite, otherSprite) {
     otherSprite.destroy(effects.disintegrate, 500)
-    chest = sprites.create(img`
-        . . b b b b b b b b b b b b . . 
-        . b e 4 4 4 4 4 4 4 4 4 4 e b . 
-        b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
-        b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
-        b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
-        b e e 4 4 4 4 4 4 4 4 4 4 e e b 
-        b e e e e e e e e e e e e e e b 
-        b e e e e e e e e e e e e e e b 
-        b b b b b b b d d b b b b b b b 
-        c b b b b b b c c b b b b b b c 
-        c c c c c c b c c b c c c c c c 
-        b e e e e e c b b c e e e e e b 
-        b e e e e e e e e e e e e e e b 
-        b c e e e e e e e e e e e e c b 
-        b b b b b b b b b b b b b b b b 
-        . b b . . . . . . . . . . b b . 
-        `, SpriteKind.bonus)
-    tiles.placeOnTile(chest, tiles.getTileLocation(60, 0))
 })
-// destroy enemy and making chest and fire-ball
+// destroy enemy + jump
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
     if (sprite.y < otherSprite.top) {
         otherSprite.destroy(effects.fire, 100)
-        chest = sprites.create(img`
-            . . b b b b b b b b b b b b . . 
-            . b e 4 4 4 4 4 4 4 4 4 4 e b . 
-            b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
-            b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
-            b e 4 4 4 4 4 4 4 4 4 4 4 4 e b 
-            b e e 4 4 4 4 4 4 4 4 4 4 e e b 
-            b e e e e e e e e e e e e e e b 
-            b e e e e e e e e e e e e e e b 
-            b b b b b b b d d b b b b b b b 
-            c b b b b b b c c b b b b b b c 
-            c c c c c c b c c b c c c c c c 
-            b e e e e e c b b c e e e e e b 
-            b e e e e e e e e e e e e e e b 
-            b c e e e e e e e e e e e e c b 
-            b b b b b b b b b b b b b b b b 
-            . b b . . . . . . . . . . b b . 
-            `, SpriteKind.bonus)
-        tiles.placeOnTile(chest, tiles.getTileLocation(60, 0))
-        fireball = sprites.create(img`
-            . . . . . . . . . . . . . . . . 
-            . . . . . . 4 4 4 4 . . . . . . 
-            . . . . 4 4 4 5 5 4 4 4 . . . . 
-            . . . 3 3 3 3 4 4 4 4 4 4 . . . 
-            . . 4 3 3 3 3 2 2 2 1 1 4 4 . . 
-            . . 3 3 3 3 3 2 2 2 1 1 5 4 . . 
-            . 4 3 3 3 3 2 2 2 2 2 5 5 4 4 . 
-            . 4 3 3 3 2 2 2 4 4 4 4 5 4 4 . 
-            . 4 4 3 3 2 2 4 4 4 4 4 4 4 4 . 
-            . 4 2 3 3 2 2 4 4 4 4 4 4 4 4 . 
-            . . 4 2 3 3 2 4 4 4 4 4 2 4 . . 
-            . . 4 2 2 3 2 2 4 4 4 2 4 4 . . 
-            . . . 4 2 2 2 2 2 2 2 2 4 . . . 
-            . . . . 4 4 2 2 2 2 4 4 . . . . 
-            . . . . . . 4 4 4 4 . . . . . . 
-            . . . . . . . . . . . . . . . . 
-            `, SpriteKind.gun)
-        tiles.placeOnTile(fireball, tiles.getTileLocation(95, 4))
     } else {
         game.over(false, effects.dissolve)
     }
@@ -232,17 +249,15 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSp
 let chest: Sprite = null
 let boss_life = 0
 let monster: Sprite = null
+let bat: Sprite = null
+let wall: tiles.Location[] = []
 let fireball: Sprite = null
 let projectile: Sprite = null
 let direction = 0
 let loaded = 0
-let bat: Sprite = null
 let Sebastian: Sprite = null
-let wall: tiles.Location[] = []
 let level = 0
 level = 1
-make_tilmap(level)
-wall = tiles.getTilesByType(sprites.dungeon.stairNorth)
 Sebastian = sprites.create(img`
     ........................
     ....ffffff..............
@@ -271,53 +286,11 @@ Sebastian = sprites.create(img`
     `, SpriteKind.Player)
 controller.moveSprite(Sebastian, 100, 0)
 Sebastian.ay = 300
-tiles.placeOnRandomTile(Sebastian, assets.tile`tile1`)
 scene.cameraFollowSprite(Sebastian)
-bat = sprites.create(img`
-    . . f f f . . . . . . . . . . . 
-    f f f c c . . . . . . . . f f f 
-    f f c c c . c c . . . f c b b c 
-    f f c 3 c c 3 c c f f b b b c . 
-    f f c 3 b c 3 b c f b b c c c . 
-    f c b b b b b b c f b c b c c . 
-    c c 1 b b b 1 b c b b c b b c . 
-    c b b b b b b b b b c c c b c . 
-    c b 1 f f 1 c b b c c c c c . . 
-    c f 1 f f 1 f b b b b f c . . . 
-    f f f f f f f b b b b f c . . . 
-    f f 2 2 2 2 f b b b b f c c . . 
-    . f 2 2 2 2 2 b b b c f . . . . 
-    . . f 2 2 2 b b b c f . . . . . 
-    . . . f f f f f f f . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    `, SpriteKind.Enemy)
-tiles.placeOnRandomTile(bat, sprites.dungeon.collectibleBlueCrystal)
-bat.x += 14
 loaded = 0
 direction = 1
-// Level 1
-game.onUpdate(function () {
-    // enemy
-    // 
-    if (bat.tileKindAt(TileDirection.Left, sprites.dungeon.collectibleBlueCrystal)) {
-        bat.vx = 50
-    } else if (bat.tileKindAt(TileDirection.Right, sprites.dungeon.doorLockedWest)) {
-        bat.vx = -50
-    }
-    if (loaded > 0) {
-        Sebastian.say(loaded)
-    } else {
-        Sebastian.say("")
-    }
-    if (boss_life <= 0) {
-        monster.destroy(effects.disintegrate, 500)
-    }
-    if (monster.top <= 32) {
-        monster.vy = 50
-    } else if (monster.bottom >= 110) {
-        monster.vy = -50
-    }
-})
+make_tilmap(level)
+tiles.placeOnRandomTile(Sebastian, assets.tile`tile1`)
 // Hero moves
 game.onUpdate(function () {
     if (Sebastian.y > 470) {
@@ -363,5 +336,28 @@ game.onUpdate(function () {
             . . . . . f f f f f f . . . . . 
             . . . . . . . f f f . . . . . . 
             `)
+    }
+})
+// Level 1 + 2
+game.onUpdate(function () {
+    // enemy
+    // 
+    if (bat.tileKindAt(TileDirection.Left, sprites.dungeon.collectibleBlueCrystal)) {
+        bat.vx = 50
+    } else if (bat.tileKindAt(TileDirection.Right, sprites.dungeon.doorLockedWest)) {
+        bat.vx = -50
+    }
+    if (loaded > 0) {
+        Sebastian.say(loaded)
+    } else {
+        Sebastian.say("")
+    }
+    if (boss_life <= 0) {
+        monster.destroy(effects.disintegrate, 500)
+    }
+    if (monster.top <= 32) {
+        monster.vy = 50
+    } else if (monster.bottom >= 110) {
+        monster.vy = -50
     }
 })
